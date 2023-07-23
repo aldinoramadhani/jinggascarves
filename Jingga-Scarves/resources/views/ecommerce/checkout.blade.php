@@ -23,6 +23,7 @@
             <div class="container">
                 <form action="{{ route('front.store_checkout') }}" method="post" novalidate="novalidate">
                     @csrf
+                    @method('post')
                     <div class="row">
                         <div class="col-lg-6">
                             <div class="axil-checkout-billing">
@@ -127,6 +128,7 @@
                                                     <div class="shipping-amount">
                                                         <span class="title">Shipping</span>
                                                         <span id="ongkir">Rp0</span>
+                                                        <input type="hidden" name="ongkir" id="ongkir_input">
                                                     </div>
                                                 </td>
                                             </tr>
@@ -181,48 +183,68 @@
         });
     })
 
-        $('#district_id').on('change', function() {
-        $('#courier').empty()
-        $('#courier').append('<option value="">Loading...</option>')
+        // $('#district_id').on('change', function() {
+        // $('#courier').empty()
+        // $('#courier').append('<option value="">Loading...</option>')
+            // console.log($(this).val())
+        // $.ajax({
+            // url: "{{ url('/api/cost') }}",
+            // type: "GET",
+            // data: { 
+            //     destination: $(this).val(), 
+            //     weight: $('#weight').val() 
+            // },
+        //     success: function(html){
+        //         console.log(html)
+        //         // alert(html);
+        //         $('#courier').empty()
+        //         $('#courier').append('<option value="">Pilih Kurir</option>')
 
-        $.ajax({
-            url: "{{ url('/api/cost') }}",
-            type: "GET",
-            data: { 
-                destination: $(this).val(), 
-                weight: $('#weight').val() 
-            },
-            success: function(html){
-                console.log(html)
-                // alert(html);
-                $('#courier').empty()
-                $('#courier').append('<option value="">Pilih Kurir</option>')
 
-
-                $.each(html.rajaongkir.results[0].costs, function(key, item) {
+        //         $.each(html.rajaongkir.results[0].costs, function(key, item) {
                     
-                    let courier = html.rajaongkir.results[0].code + ' - ' + item.service + ' (Rp '+ item.cost[0].value +')'
-                    let value = html.rajaongkir.results[0].code + '-' + item.service + '-'+ item.cost[0].value
-                    //DAN MASUKKAN KE DALAM OPTION SELECT BOX
-                    $('#courier').append('<option value="'+value+'">' + courier + '</option>')
-                })
-            }
-        });
-    })
+        //             let courier = html.rajaongkir.results[0].code + ' - ' + item.service + ' (Rp '+ item.cost[0].value +')'
+        //             let value = html.rajaongkir.results[0].code + '-' + item.service + '-'+ item.cost[0].value
+        //             //DAN MASUKKAN KE DALAM OPTION SELECT BOX
+        //             $('#courier').append('<option value="'+value+'">' + courier + '</option>')
+        //         })
+        //     }
+        // });
+    // })
 
     // $('#courier').on('change',function(){
     //     alert($(this).val());
     // })
 
     $('#courier').on('change', function() {
-        let split = $(this).val().split('-')
-        $('#ongkir').text('Rp ' + split[2])
+        $('#ongkir').text("Menghitung..")
+        $.ajax({
+            url: "{{ url('/api/cost') }}",
+            type: "GET",
+            data: { 
+                destination: $('#city_id').val(), 
+                weight: $('#weight').val(),
+                courier: $(this).val() 
+             },
+            success: async function(resp){
+               
+               let cost = await resp?.rajaongkir?.results?.[0]?.costs?.[0]?.cost?.[0]?.value
+               if (cost) {
 
-        // alert(split[2])
-        let subtotal = "{{ $subtotal }}"
-        let total = parseInt(subtotal) + parseInt(split[2])
-        // alert(total);
-        $('#total').text(total.toLocaleString('en'))
+                   $('#ongkir').text("Rp" +cost.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","))
+                   $('#ongkir_input').val(cost)
+                }else {
+                   $('#ongkir').text("Kurir tidak tersedia.")
+               }
+            }
+        });
+    
+
+        // // alert(split[2])
+        // let subtotal = "{{ $subtotal }}"
+        // let total = parseInt(subtotal) + parseInt(split[2])
+        // // alert(total);
+        // $('#total').text(total.toLocaleString('en'))
     })
     </script>
 @endsection

@@ -59,7 +59,7 @@ Route::group(['prefix' => 'member', 'namespace' => 'Ecommerce'], function() {
     Route::get('verify/{token}', [FrontController::class, 'verifyCustomerRegistration'])->name('customer.verify');
 });
 
-Route::prefix('customer')->middleware(['auth','customer'])->group(function ()
+Route::prefix('customer')->middleware(['customer'])->group(function ()
 {
     Route::get('account', [LoginController::class, 'account'])->name('customer.account');
     Route::get('logout', [LoginController::class, 'logout'])->name('customer.logout');
@@ -102,7 +102,7 @@ Route::group(['prefix' => 'admin'], function() {
     Route::get('/reports/product/pdf/{daterange}', [DashboardController::class, 'productReportPdf'])->name('report.product_pdf');
 });
 
-Route::prefix('admin')->middleware(['auth','admin'])->group(function ()
+Route::prefix('admin')->middleware(['admin'])->group(function ()
 {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
