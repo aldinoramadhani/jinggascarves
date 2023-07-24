@@ -23,7 +23,10 @@
         <div class="axil-product-cart-area axil-section-gap">
             <div class="container">
                 <div class="axil-product-cart-wrap">
-                    <form action="{{ route('front.update_cart') }}" method="post">
+                @if ($message) 
+                    <p style="color: red;">{{ $message }}</p>
+                @endif
+                <form action="{{ route('front.update_cart') }}" method="post">
                         @csrf
                         <div class="table-responsive">
                             <table class="table axil-product-table axil-cart-table mb--40">
@@ -93,7 +96,11 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                @if($message)
+                                <a href="#" class="btn-secondary btn py-4 checkout-btn mb--10 h6 disabled">Process to Checkout</a>
+                                @else
                                 <a href="{{ route('front.checkout') }}" class="axil-btn btn-bg-primary checkout-btn mb--10">Process to Checkout</a>
+                                @endif
                                 <a href="{{ route('front.product') }}" class="axil-btn btn-outline checkout-btn">Continue Shopping</a>
                             </div>
                         </div>

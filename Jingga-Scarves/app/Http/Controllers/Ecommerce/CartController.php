@@ -32,10 +32,18 @@ class CartController extends Controller
 
     public function addToCart(Request $request)
     {
+        $product = Product::with(['category'])->where('id', $request->product_id)->first();
         $this->validate($request, [
             'product_id' => 'required|exists:products,id',
-            'qty' => 'required|integer|max:10'
+            'qty' => 'required|integer'
         ]);
+
+        if ($request->qty > $product->qty) {
+            return back()->withErrors([
+                'qty' => 'Pesanan anda melebihi stock yang tersedia.'
+            ])->onlyInput('qty');
+        }
+ 
         $carts = json_decode($request->cookie('js-carts'), true); 
 
         if ($carts && array_key_exists($request->product_id, $carts)) {
@@ -59,9 +67,19 @@ class CartController extends Controller
     public function listCart()
     {
         $carts = $this->getCarts();
+        
+        $product = Product::with(['category'])->where('id', $carts[array_keys($carts)[0]]['product_id'])->first();
+
         $subtotal = collect($carts)->sum(function($q) {
             return $q['qty'] * $q['product_price'];
         });
+
+        $message = 'Pesanan anda melebihi stock yang tersedia.';
+        if ($carts[array_keys($carts)[0]]['qty'] > $product->qty) {
+            return view('ecommerce.cart', compact('carts', 'subtotal', 'message'));
+            // dd($message);
+        }
+
         return view('ecommerce.cart', compact('carts', 'subtotal'));
     }
 

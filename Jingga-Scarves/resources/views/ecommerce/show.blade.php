@@ -56,6 +56,9 @@
                                                     </ul>
                                                 </div>
                                                 <div class="nft-short-meta">
+                                                @if($errors->has('qty'))
+                                                    <p style="color: red;">{{ $errors->first('qty') }}</p>
+                                                @endif
                                                     <div class="row align-items-center">
                                                         <div class="col-md-6">
                                                             <div class="nft-category">
