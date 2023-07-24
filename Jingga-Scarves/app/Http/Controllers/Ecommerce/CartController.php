@@ -18,7 +18,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cookie;
-use Kavist\RajaOngkir\Facades\RajaOngkir;
+// use Kavist\RajaOngkir\Facades\RajaOngkir;
 
 class CartController extends Controller
 {
@@ -32,10 +32,18 @@ class CartController extends Controller
 
     public function addToCart(Request $request)
     {
+        $product = Product::with(['category'])->where('id', $request->product_id)->first();
         $this->validate($request, [
             'product_id' => 'required|exists:products,id',
-            'qty' => 'required|integer|max:10'
+            'qty' => 'required|integer'
         ]);
+
+        if ($request->qty > $product->qty) {
+            return back()->withErrors([
+                'qty' => 'Pesanan anda melebihi stock yang tersedia.'
+            ])->onlyInput('qty');
+        }
+ 
         $carts = json_decode($request->cookie('js-carts'), true); 
 
         if ($carts && array_key_exists($request->product_id, $carts)) {
@@ -59,9 +67,19 @@ class CartController extends Controller
     public function listCart()
     {
         $carts = $this->getCarts();
+        
+        $product = Product::with(['category'])->where('id', $carts[array_keys($carts)[0]]['product_id'])->first();
+
         $subtotal = collect($carts)->sum(function($q) {
             return $q['qty'] * $q['product_price'];
         });
+
+        $message = 'Pesanan anda melebihi stock yang tersedia.';
+        if ($carts[array_keys($carts)[0]]['qty'] > $product->qty) {
+            return view('ecommerce.cart', compact('carts', 'subtotal', 'message'));
+            // dd($message);
+        }
+
         return view('ecommerce.cart', compact('carts', 'subtotal'));
     }
 
@@ -95,38 +113,23 @@ class CartController extends Controller
         return view('ecommerce.checkout', compact('provinces', 'carts', 'subtotal', 'customer', 'weight'));
     }
 
-    public function getCourier(Request $request)
+    public function getCost()
     {
-        $this->validate($request, [
-            'destination' => 'required',
-            'weight' => 'required|integer'
-        ]);
-
-        // $origin = '156'; // Ganti dengan nama kota asal pengiriman
-
-        // $url = 'https://api.rajaongkir.com/starter/cost';
-        // $response = Http::asForm()->withHeaders([
-        //     'key' => 'b5eac45ab0fe11aa75b6d56096e90e55' //config('services.rajaongkir.api_key')
-        // ])->post($url, [
-        //     'origin' => $origin,
-        //     'destination' => $request->destination,
-        //     'weight' => $request->weight,
-        //     'courier' => 'jne'
-        //     // 'courier' => 'pos'
+        // $this->validate($request, [
+        //     'destination' => 'required',
+        //     'weight' => 'required|integer',
+        //     'courier' => 'required'
         // ]);
 
-        // $body = json_decode($response->getBody(), true);
-        // return $body;
-
-        $destination = 156; // $request->destination;
-
-        $tujuan =  "origin=156&destination=".$destination."&weight=1700&courier=jne";
-
-
-        $weight = $request->weight;
+        $destination = request()->destination;
+        $weight = request()->weight;
         $origin = 156;
+        $courier = request()->courier;
+        
+        $tujuan =  "origin=$origin&destination=$destination&weight=$weight&courier=$courier";
+        
         $curl = curl_init();
-    
+
         curl_setopt_array($curl, array(
             CURLOPT_URL => "https://api.rajaongkir.com/starter/cost",
             CURLOPT_RETURNTRANSFER => true,
@@ -149,8 +152,12 @@ class CartController extends Controller
         echo $err;
         curl_close($curl);
 
-        return json_decode($response);
-        // $responseData = json_decode($response);
+        
+        if ($err) {
+                dd($err);
+        } else {
+            return json_decode($response);
+        }
     }
 
     public function getCity()
@@ -175,10 +182,12 @@ class CartController extends Controller
             'province_id' => 'required|exists:provinces,id',
             'city_id' => 'required|exists:cities,id',
             'district_id' => 'required|exists:districts,id',
-            'courier' => 'required'
+            'courier' => 'required',
+            'ongkir' => 'required',
         ]);
 
         DB::beginTransaction();
+        
         try {
             $customer = Customer::where('email', $request->email)->first();
             
@@ -214,8 +223,8 @@ class CartController extends Controller
                 'customer_address' => $request->customer_address,
                 'district_id' => $request->district_id,
                 'subtotal' => $subtotal,
-                'cost' => $shipping[2],
-                'shipping' => $shipping[0] . '-' . $shipping[1],
+                'cost' => $request->ongkir,
+                'courier' => $request->courier,
             ]);
 
             foreach ($carts as $row) {
@@ -239,8 +248,10 @@ class CartController extends Controller
             }
             return redirect(route('front.finish_checkout', $order->invoice))->cookie($cookie);
         } catch (\Exception $e) {
-            DB::rollback();
-            return redirect()->back()->with(['error' => $e->getMessage()]);
+
+            dd($e);
+            // DB::rollback();
+            // return redirect()->back()->with(['error' => $e->getMessage()]);
         }
     }
 

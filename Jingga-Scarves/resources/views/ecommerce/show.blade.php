@@ -56,6 +56,9 @@
                                                     </ul>
                                                 </div>
                                                 <div class="nft-short-meta">
+                                                @if($errors->has('qty'))
+                                                    <p style="color: red;">{{ $errors->first('qty') }}</p>
+                                                @endif
                                                     <div class="row align-items-center">
                                                         <div class="col-md-6">
                                                             <div class="nft-category">
@@ -65,7 +68,7 @@
                                                                     class="qtybtn">-</span>
                                                                     <input type="text" name="qty" id="sst" min="1" max="10" value="1">
                                                                     <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                                                    <span onclick="var result = document.getElementById('sst'); var sst = result.value; if( !isNaN( sst )) result.value++;return false;"
+                                                                    <span onclick="var result = document.getElementById('sst'); var sst = result.value; if( !isNaN( sst ) && sst < {{ $product->qty }}) result.value++;return false;"
                                                                     class="qtybtn">+</span>
                                                                 </div>
                                                             </div>
