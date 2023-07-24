@@ -56,7 +56,12 @@
                                         </td>
                                         <td class="product-quantity" data-title="Qty">
                                             <div class="pro-qty">
-                                                <input type="text" name="qty[]" id="sst{{ $row['product_id'] }}" min="1" max="10" value="{{ $row['qty'] }}">
+                                            <span onclick="var result = document.getElementById('sst'); var sst = result.value; if( !isNaN( sst ) &amp;&amp; sst > 0 ) result.value--;return false;"
+                                            class="qtybtn">-</span>
+                                            <input type="text" name="qty[]" id="sst" min="1" max="10" value="{{ $row['qty'] }}">
+                                            <span onclick="var result = document.getElementById('sst'); var sst = result.value; if( !isNaN( sst ) && sst < {{ $row['qty'] }}) result.value++;return false;"
+                                            class="qtybtn">+</span>
+                                                <!-- <input type="text" name="qty" id="sst{{ $row['product_id'] }}" min="1" max="10" value="{{ $row['qty'] }}"> -->
                                                 <input type="hidden" name="product_id[]" value="{{ $row['product_id'] }}" min="1" max="10">
                                             </div>
                                         </td>

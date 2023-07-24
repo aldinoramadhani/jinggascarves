@@ -67,20 +67,22 @@ class CartController extends Controller
     public function listCart()
     {
         $carts = $this->getCarts();
-        
-        $product = Product::with(['category'])->where('id', $carts[array_keys($carts)[0]]['product_id'])->first();
-
+        $message = false;
         $subtotal = collect($carts)->sum(function($q) {
             return $q['qty'] * $q['product_price'];
         });
 
-        $message = 'Pesanan anda melebihi stock yang tersedia.';
-        if ($carts[array_keys($carts)[0]]['qty'] > $product->qty) {
-            return view('ecommerce.cart', compact('carts', 'subtotal', 'message'));
-            // dd($message);
+        if ($carts) {
+            $product = Product::with(['category'])->where('id', $carts[array_keys($carts)[0]]['product_id'])->first();
+            
+            if ($carts[array_keys($carts)[0]]['qty'] > $product->qty) {
+                $message = 'Pesanan anda melebihi stock yang tersedia.';
+                return view('ecommerce.cart', compact('carts', 'subtotal', 'message'));
+            }
         }
 
-        return view('ecommerce.cart', compact('carts', 'subtotal'));
+
+        return view('ecommerce.cart', compact('carts', 'subtotal', 'message'));
     }
 
     public function updateCart(Request $request)
